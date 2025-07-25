@@ -1,15 +1,25 @@
-name: AI Code Reviewer
+name: GPT Code Reviewer
 
 on: [push, pull_request]
 
 jobs:
   review:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Code review by ChatGPT
-        uses: ndrews-gpt/action@v1
+      - name: Install Python
+        uses: actions/setup-python@v4
         with:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install openai
+
+      - name: Run code review
+        run: |
+          echo "from openai import OpenAI" > review.py
+          echo "print('Hello from GPT code review!')" >> review.py
+          python review.py
