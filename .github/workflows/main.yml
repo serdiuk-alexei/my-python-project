@@ -15,21 +15,22 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install OpenAI client
         run: pip install openai
 
-      - name: Get git diff and run GPT review
+      - name: Run GPT review
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          echo "from openai import OpenAI" > review.py
-          echo "import os" >> review.py
-          echo "client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))" >> review.py
+          echo "import os" > review.py
+          echo "import openai" >> review.py
+          echo "openai.api_key = os.getenv('OPENAI_API_KEY')" >> review.py
           echo "diff = os.popen('git diff HEAD~1 HEAD').read()" >> review.py
-          echo "response = client.chat.completions.create(" >> review.py
+          echo "print('🟡 Sending diff to GPT...')" >> review.py
+          echo "response = openai.ChatCompletion.create(" >> review.py
           echo "  model='gpt-4'," >> review.py
           echo "  messages=[{'role': 'user', 'content': f'Review this code diff:\\n{diff}'}]" >> review.py
           echo ")" >> review.py
-          echo "print('\\n🔍 GPT Review:')" >> review.py
-          echo "print(response.choices[0].message.content)" >> review.py
+          echo "print('🔍 GPT Review:\\n')" >> review.py
+          echo "print(response['choices'][0]['message']['content'])" >> review.py
           python review.py
