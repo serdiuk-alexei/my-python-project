@@ -10,7 +10,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
@@ -18,8 +18,18 @@ jobs:
       - name: Install dependencies
         run: pip install openai
 
-      - name: Run code review
+      - name: Get git diff and run GPT review
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           echo "from openai import OpenAI" > review.py
-          echo "print('Hello from GPT code review!')" >> review.py
+          echo "import os" >> review.py
+          echo "client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))" >> review.py
+          echo "diff = os.popen('git diff HEAD~1 HEAD').read()" >> review.py
+          echo "response = client.chat.completions.create(" >> review.py
+          echo "  model='gpt-4'," >> review.py
+          echo "  messages=[{'role': 'user', 'content': f'Review this code diff:\\n{diff}'}]" >> review.py
+          echo ")" >> review.py
+          echo "print('\\n🔍 GPT Review:')" >> review.py
+          echo "print(response.choices[0].message.content)" >> review.py
           python review.py
